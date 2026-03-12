@@ -1,5 +1,4 @@
 require("dotenv").config({ path: "./config.env" });
-const { nanoid } = require("nanoid");
 const Url = require("./../models/urlModel");
 
 exports.getAllUrls = async (req, res) => {

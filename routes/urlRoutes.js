@@ -1,8 +1,11 @@
 const express = require("express");
 const urlController = require("./../controllers/urlController");
-const router = express.Router();
+const urlRouter = express.Router();
 
-router
+urlRouter
   .route("/")
   .post(urlController.createShortUrl)
   .get(urlController.getAllUrls);
+
+
+module.exports = urlRouter

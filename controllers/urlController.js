@@ -20,10 +20,10 @@ exports.getAllUrls = async (req, res) => {
 
 exports.createShortUrl = async (req, res) => {
   try {
-    const originalUrl = req.body;
+    const { originalUrl } = req.body;
     const shortCode = nanoid(8);
     const shortUrl = process.env.BASE_URL;
-    const url = await Url.create(originalUrl, shortCode);
+    const url = await Url.create({ originalUrl, shortCode });
     res.status(201).json({
       status: "success",
       data: {

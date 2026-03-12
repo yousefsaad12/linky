@@ -11,3 +11,5 @@ function encodeBase62(counter) {
 
   return str;
 }
+
+module.exports = encodeBase62

@@ -1,6 +1,8 @@
 require("dotenv").config({ path: "./config.env" });
 const Url = require("./../models/urlModel");
-
+const Counter = require("./../models/counterModel");
+const encodeBase62 = require("./../utils/base62");
+const URL = require("url");
 exports.getAllUrls = async (req, res) => {
   try {
     const urls = await Url.find();
@@ -20,10 +22,31 @@ exports.getAllUrls = async (req, res) => {
 exports.createShortUrl = async (req, res) => {
   try {
     const { originalUrl } = req.body;
-    const shortCode = nanoid(8);
-    const shortUrl = process.env.BASE_URL;
+
+    const existingUrl = await Url.findOne({ originalUrl });
+
+    if (existingUrl)
+      return res.status(200).json({
+        status: "success",
+        data: {
+          url: existingUrl,
+          shortUrl: process.env.BASE_URL + existingUrl.shortCode,
+        },
+      });
+
+    const counterDoc = await Counter.findByIdAndUpdate(
+      "url_count",
+      { $inc: { seq: 1 } },
+      {
+        returnDocument: "after",
+        upsert: true,
+      },
+    );
+
+    const shortCode = encodeBase62(counterDoc.seq);
+    const shortUrl = process.env.BASE_URL + shortCode;
     const url = await Url.create({ originalUrl, shortCode });
-    res.status(201).json({
+    return res.status(201).json({
       status: "success",
       data: {
         url,

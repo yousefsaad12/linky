@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+```
+
+The most critical ones are:
+```
+node_modules/  ← never push this, it's huge
+.env           ← never push this, it has secrets like DB password and BASE_URL

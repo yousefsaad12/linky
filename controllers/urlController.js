@@ -65,7 +65,6 @@ exports.getOriginalUrl = async (req, res) => {
   try {
     const shortCode = req.params.shortCode;
 
-
     const url = await Url.findOne({
       shortCode: shortCode,
     });
@@ -76,11 +75,16 @@ exports.getOriginalUrl = async (req, res) => {
         message: "This short URL is not found",
       });
 
+    if (url.expiresAt < Date.now())
+      return res.status(410).json({
+        status: "fail",
+        message: "This short URL is expired",
+      });
     const originalUrl = url.originalUrl;
 
     url.clicks += 1;
     await url.save();
-    res.status(300).redirect(originalUrl);
+    res.redirect(originalUrl);
   } catch (error) {
     res.status(500).json({
       status: "fail",

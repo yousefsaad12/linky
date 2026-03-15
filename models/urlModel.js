@@ -4,6 +4,7 @@ const urlSchema = new mongoose.Schema({
   shortCode: {
     type: String,
     unique: true,
+    required: true,
   },
 
   originalUrl: {
@@ -37,4 +38,4 @@ const urlSchema = new mongoose.Schema({
 
 urlSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-module.exports = mongoose.model("Url", urlSchema)
+module.exports = mongoose.model("Url", urlSchema);

@@ -20,4 +20,5 @@ Thumbs.db
 The most critical ones are:
 ```
 node_modules/  ← never push this, it's huge
-.env           ← never push this, it has secrets like DB password and BASE_URL
+.env
+config.env           ← never push this, it has secrets like DB password and BASE_URL

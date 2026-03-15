@@ -62,22 +62,17 @@ exports.createShortUrl = async (req, res) => {
 
 exports.getOriginalUrl = async (req, res) => {
   try {
-    const url = await Url.findOne(
+    // still here we need the caching layer
+    const url = await Url.findOneAndUpdate(
       { shortCode: req.params.shortCode },
       { $inc: { clicks: 1 } },
-      { new: true },
+      { returnDocument: "after" },
     );
 
     if (!url)
       return res.status(404).json({
         status: "fail",
         message: "This short URL is not found",
-      });
-
-    if (url.expiresAt < Date.now())
-      return res.status(410).json({
-        status: "fail",
-        message: "This short URL is expired",
       });
 
     res.redirect(url.originalUrl);

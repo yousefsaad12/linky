@@ -1,4 +1,3 @@
-
 const Url = require("./../models/urlModel");
 const Counter = require("./../models/counterModel");
 const encodeBase62 = require("./../utils/base62");
@@ -63,11 +62,11 @@ exports.createShortUrl = async (req, res) => {
 
 exports.getOriginalUrl = async (req, res) => {
   try {
-    const shortCode = req.params.shortCode;
-
-    const url = await Url.findOne({
-      shortCode: shortCode,
-    });
+    const url = await Url.findOne(
+      { shortCode: req.params.shortCode },
+      { $inc: { clicks: 1 } },
+      { new: true },
+    );
 
     if (!url)
       return res.status(404).json({
@@ -80,11 +79,8 @@ exports.getOriginalUrl = async (req, res) => {
         status: "fail",
         message: "This short URL is expired",
       });
-    const originalUrl = url.originalUrl;
 
-    url.clicks += 1;
-    await url.save();
-    res.redirect(originalUrl);
+    res.redirect(url.originalUrl);
   } catch (error) {
     res.status(500).json({
       status: "fail",

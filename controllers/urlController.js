@@ -2,7 +2,7 @@ require("dotenv").config({ path: "./config.env" });
 const Url = require("./../models/urlModel");
 const Counter = require("./../models/counterModel");
 const encodeBase62 = require("./../utils/base62");
-const URL = require("url");
+
 exports.getAllUrls = async (req, res) => {
   try {
     const urls = await Url.find();
@@ -55,6 +55,34 @@ exports.createShortUrl = async (req, res) => {
     });
   } catch (error) {
     res.status(400).json({
+      status: "fail",
+      message: error.message,
+    });
+  }
+};
+
+exports.getOriginalUrl = async (req, res) => {
+  try {
+    const shortCode = req.params.shortCode;
+
+
+    const url = await Url.findOne({
+      shortCode: shortCode,
+    });
+
+    if (!url)
+      return res.status(404).json({
+        status: "fail",
+        message: "This short URL is not found",
+      });
+
+    const originalUrl = url.originalUrl;
+
+    url.clicks += 1;
+    await url.save();
+    res.status(300).redirect(originalUrl);
+  } catch (error) {
+    res.status(500).json({
       status: "fail",
       message: error.message,
     });

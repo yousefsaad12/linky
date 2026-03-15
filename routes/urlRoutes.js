@@ -1,11 +1,12 @@
 const express = require("express");
 const urlController = require("./../controllers/urlController");
 const urlRouter = express.Router();
-
+const validateUrl = require("./../middlewares/validateUrl");
 urlRouter
   .route("/")
-  .post(urlController.createShortUrl)
+  .post(validateUrl, urlController.createShortUrl)
   .get(urlController.getAllUrls);
 
+urlRouter.route("/:shortCode").get(urlController.getOriginalUrl);
 
-module.exports = urlRouter
+module.exports = urlRouter;

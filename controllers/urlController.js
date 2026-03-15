@@ -1,4 +1,4 @@
-require("dotenv").config({ path: "./config.env" });
+
 const Url = require("./../models/urlModel");
 const Counter = require("./../models/counterModel");
 const encodeBase62 = require("./../utils/base62");

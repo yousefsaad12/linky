@@ -26,8 +26,7 @@ const validateUrl = async (req, res, next) => {
         message: "URL too long",
       });
 
-      next()
-      
+    next();
   } catch (error) {
     res.status(500).json({
       status: "error",
@@ -35,3 +34,5 @@ const validateUrl = async (req, res, next) => {
     });
   }
 };
+
+module.exports = validateUrl;

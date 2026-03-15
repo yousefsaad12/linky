@@ -1,8 +1,7 @@
-require("dotenv").config({ path: "./config.env" });
 const Url = require("./../models/urlModel");
 const Counter = require("./../models/counterModel");
 const encodeBase62 = require("./../utils/base62");
-const URL = require("url");
+
 exports.getAllUrls = async (req, res) => {
   try {
     const urls = await Url.find();
@@ -55,6 +54,30 @@ exports.createShortUrl = async (req, res) => {
     });
   } catch (error) {
     res.status(400).json({
+      status: "fail",
+      message: error.message,
+    });
+  }
+};
+
+exports.getOriginalUrl = async (req, res) => {
+  try {
+    // still here we need the caching layer
+    const url = await Url.findOneAndUpdate(
+      { shortCode: req.params.shortCode },
+      { $inc: { clicks: 1 } },
+      { returnDocument: "after" },
+    );
+
+    if (!url)
+      return res.status(404).json({
+        status: "fail",
+        message: "This short URL is not found",
+      });
+
+    res.redirect(url.originalUrl);
+  } catch (error) {
+    res.status(500).json({
       status: "fail",
       message: error.message,
     });

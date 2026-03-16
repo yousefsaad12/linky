@@ -63,11 +63,9 @@ exports.createShortUrl = async (req, res) => {
 exports.getOriginalUrl = async (req, res) => {
   try {
     // still here we need the caching layer
-    const url = await Url.findOneAndUpdate(
-      { shortCode: req.params.shortCode },
-      { $inc: { clicks: 1 } },
-      { returnDocument: "after" },
-    );
+    const url = await Url.findOne({ shortCode: req.params.shortCode })
+      .select("originalUrl")
+      .lean();
 
     if (!url)
       return res.status(404).json({
@@ -76,6 +74,11 @@ exports.getOriginalUrl = async (req, res) => {
       });
 
     res.redirect(url.originalUrl);
+
+    Url.updateOne(
+      { shortCode: req.params.shortCode },
+      { $inc: { clicks: 1 } },
+    ).exec();
   } catch (error) {
     res.status(500).json({
       status: "fail",

@@ -1,88 +1,65 @@
 const Url = require("./../models/urlModel");
 const Counter = require("./../models/counterModel");
 const encodeBase62 = require("./../utils/base62");
+const catchAsync = require("./../utils/catchAsync");
+const ErrorHandler = require("../utils/errorHandler");
 
-exports.getAllUrls = async (req, res) => {
-  try {
-    const urls = await Url.find();
+exports.getAllUrls = catchAsync(async (req, res, next) => {
+  const urls = await Url.find();
 
-    res.status(200).json({
-      status: "success",
-      data: urls,
-    });
-  } catch (error) {
-    res.status(404).json({
-      status: "fail",
-      message: error.message,
-    });
-  }
-};
+  res.status(200).json({
+    status: "success",
+    data: urls,
+  });
+});
 
-exports.createShortUrl = async (req, res) => {
-  try {
-    const { originalUrl } = req.body;
+exports.createShortUrl = catchAsync(async (req, res, next) => {
+  const { originalUrl } = req.body;
 
-    const existingUrl = await Url.findOne({ originalUrl });
+  const existingUrl = await Url.findOne({ originalUrl });
 
-    if (existingUrl)
-      return res.status(200).json({
-        status: "success",
-        data: {
-          url: existingUrl,
-          shortUrl: process.env.BASE_URL + existingUrl.shortCode,
-        },
-      });
-
-    const counterDoc = await Counter.findByIdAndUpdate(
-      "url_count",
-      { $inc: { seq: 1 } },
-      {
-        returnDocument: "after",
-        upsert: true,
-      },
-    );
-
-    const shortCode = encodeBase62(counterDoc.seq);
-    const shortUrl = process.env.BASE_URL + shortCode;
-    const url = await Url.create({ originalUrl, shortCode });
-    return res.status(201).json({
+  if (existingUrl)
+    return res.status(200).json({
       status: "success",
       data: {
-        url,
-        shortUrl,
+        url: existingUrl,
+        shortUrl: process.env.BASE_URL + existingUrl.shortCode,
       },
     });
-  } catch (error) {
-    res.status(400).json({
-      status: "fail",
-      message: error.message,
-    });
-  }
-};
 
-exports.getOriginalUrl = async (req, res) => {
-  try {
-    // still here we need the caching layer
-    const url = await Url.findOne({ shortCode: req.params.shortCode })
-      .select("originalUrl")
-      .lean();
+  const counterDoc = await Counter.findByIdAndUpdate(
+    "url_count",
+    { $inc: { seq: 1 } },
+    {
+      returnDocument: "after",
+      upsert: true,
+    },
+  );
 
-    if (!url)
-      return res.status(404).json({
-        status: "fail",
-        message: "This short URL is not found",
-      });
+  const shortCode = encodeBase62(counterDoc.seq);
+  const shortUrl = process.env.BASE_URL + shortCode;
+  const url = await Url.create({ originalUrl, shortCode });
+  return res.status(201).json({
+    status: "success",
+    data: {
+      url,
+      shortUrl,
+    },
+  });
+});
 
-    res.redirect(url.originalUrl);
+exports.getOriginalUrl = catchAsync(async (req, res, next) => {
+  // still here we need the caching layer
+  const url = await Url.findOne({ shortCode: req.params.shortCode })
+    .select("originalUrl")
+    .lean();
 
-    Url.updateOne(
-      { shortCode: req.params.shortCode },
-      { $inc: { clicks: 1 } },
-    ).exec();
-  } catch (error) {
-    res.status(500).json({
-      status: "fail",
-      message: error.message,
-    });
-  }
-};
+  if (!url) return next(new ErrorHandler(404, "This short URL is not found"));
+
+  res.redirect(url.originalUrl);
+
+  Url.updateOne(
+    { shortCode: req.params.shortCode },
+    { $inc: { clicks: 1 } },
+  ).exec();
+});

@@ -1,7 +1,7 @@
 const express = require("express");
 const urlRouter = require("./routes/urlRoutes");
+const globalErrorHandler = require("./controllers/errorController");
 const app = express();
-
 app.use(express.json());
 
 app.get("/", (req, res) => {
@@ -9,4 +9,5 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/v1/url", urlRouter);
+app.use(globalErrorHandler);
 module.exports = app;

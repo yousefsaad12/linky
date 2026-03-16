@@ -36,6 +36,7 @@ const urlSchema = new mongoose.Schema({
   },
 });
 
+
 urlSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 module.exports = mongoose.model("Url", urlSchema);

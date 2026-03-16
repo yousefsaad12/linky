@@ -7,6 +7,9 @@ urlRouter
   .post(validateUrl, urlController.createShortUrl)
   .get(urlController.getAllUrls);
 
-urlRouter.route("/:shortCode").get(urlController.getOriginalUrl);
+urlRouter
+  .route("/:shortCode")
+  .get(urlController.getOriginalUrl)
+  .delete(urlController.deleteUrl);
 
 module.exports = urlRouter;

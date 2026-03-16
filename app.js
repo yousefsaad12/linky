@@ -1,6 +1,6 @@
 const express = require("express");
 const urlRouter = require("./routes/urlRoutes");
-const globalErrorHandler = require("./controllers/errorController");
+const globalErrorHandler = require("./middlewares/errorMiddleware");
 const app = express();
 app.use(express.json());
 

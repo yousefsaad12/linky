@@ -2,7 +2,7 @@ const Url = require("./../models/urlModel");
 const Counter = require("./../models/counterModel");
 const encodeBase62 = require("./../utils/base62");
 const catchAsync = require("./../utils/catchAsync");
-const ErrorHandler = require("../utils/errorHandler");
+const AppError = require("../utils/AppError");
 
 exports.getAllUrls = catchAsync(async (req, res, next) => {
   const urls = await Url.find();
@@ -54,7 +54,8 @@ exports.getOriginalUrl = catchAsync(async (req, res, next) => {
     .select("originalUrl")
     .lean();
 
-  if (!url) return next(new ErrorHandler(404, "This short URL is not found"));
+    
+  if (!url) return next(new AppError(404, "This short URL is not found"));
 
   res.redirect(url.originalUrl);
 

@@ -1,13 +1,13 @@
 const {
   handleCastErrorDB,
-  handleValidationErrorDB,
-  handleDuplicateFieldsDB,
+  handleValidationErrorsDB,
+  handleDuplicateFieldDB,
 } = require("./../errors/errorHandler");
 
 const errorHandlerMap = {
   CastError: handleCastErrorDB,
-  ValidationError: handleValidationErrorDB,
-  11000: handleDuplicateFieldsDB,
+  ValidationError: handleValidationErrorsDB,
+  11000: handleDuplicateFieldDB,
 };
 
 const sendErrorDev = (err, res) => {

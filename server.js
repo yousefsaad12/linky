@@ -1,6 +1,6 @@
 
 const mongoose = require("mongoose");
-require("dotenv").config({ path: "./config.env" }); 
+require("dotenv").config(); 
 const app = require("./app");
 
 if (!process.env.DATABASE || !process.env.DATABASE_PASSWORD) {

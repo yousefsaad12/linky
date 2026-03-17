@@ -54,7 +54,7 @@ exports.getOriginalUrl = catchAsync(async (req, res, next) => {
     .select("originalUrl")
     .lean();
 
-  if (!url) return next(new AppError(404, "This short URL is not found"));
+  if (!url) return next(new AppError("This short URL is not found", 404));
 
   res.redirect(url.originalUrl);
 
@@ -67,7 +67,7 @@ exports.getOriginalUrl = catchAsync(async (req, res, next) => {
 exports.deleteUrl = catchAsync(async (req, res, next) => {
   const url = await Url.findOneAndDelete({ shortCode: req.params.shortCode });
 
-  if (!url) return next(new AppError(404, "This short URL is not found"));
+  if (!url) return next(new AppError("This short URL is not found", 404));
 
   res.status(204).send();
 });

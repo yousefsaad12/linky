@@ -1,42 +1,25 @@
 const mongoose = require("mongoose");
+const { years } = require("./../utils/time");
+const urlSchema = new mongoose.Schema(
+  {
+    shortCode: {
+      type: String,
 
-const urlSchema = new mongoose.Schema({
-  shortCode: {
-    type: String,
-    unique: true,
-    required: true,
-  },
-
-  originalUrl: {
-    type: String,
-    unique: true,
-    required: true,
-    validate: {
-      validator: (u) => {
-        try {
-          new URL(u);
-          return true;
-        } catch (error) {
-          return false;
-        }
-      },
-      message: "Invalid URL",
+      required: true,
     },
-  },
 
-  clicks: { type: Number, default: 0 },
-  createdAt: { type: Date, default: Date.now },
-  expiresAt: {
-    type: Date,
-    default: () => {
-      const date = new Date();
-      date.setFullYear(date.getFullYear() + 5);
-      return date;
+    originalUrl: {
+      type: String,
+
+      required: true,
     },
+
+    clicks: { type: Number, default: 0 },
   },
-});
+  { timestamps: true },
+);
 
-
-urlSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+urlSchema.index({ shortCode: 1 }, { unique: true });
+urlSchema.index({ createdAt: 1 }, { expireAfterSeconds: years(5) });
 
 module.exports = mongoose.model("Url", urlSchema);

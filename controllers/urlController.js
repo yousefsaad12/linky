@@ -58,7 +58,7 @@ exports.getOriginalUrl = catchAsync(async (req, res, next) => {
 
   res.redirect(url.originalUrl);
 
-  Url.updateOne(
+  await Url.updateOne(
     { shortCode: req.params.shortCode },
     { $inc: { clicks: 1 } },
   ).exec();

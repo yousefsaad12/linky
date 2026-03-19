@@ -1,8 +1,10 @@
 const Url = require("./../models/urlModel");
 const Counter = require("./../models/counterModel");
+const Click = require("./../models/clickModel");
 const encodeBase62 = require("./../utils/base62");
 const catchAsync = require("./../utils/catchAsync");
 const AppError = require("../utils/AppError");
+const collectAnalytics = require("./../utils/collectAnalytics");
 
 exports.getAllUrls = catchAsync(async (req, res, next) => {
   const urls = await Url.find();
@@ -15,17 +17,6 @@ exports.getAllUrls = catchAsync(async (req, res, next) => {
 
 exports.createShortUrl = catchAsync(async (req, res, next) => {
   const { originalUrl } = req.body;
-
-  const existingUrl = await Url.findOne({ originalUrl });
-
-  if (existingUrl)
-    return res.status(200).json({
-      status: "success",
-      data: {
-        url: existingUrl,
-        shortUrl: process.env.BASE_URL + existingUrl.shortCode,
-      },
-    });
 
   const counterDoc = await Counter.findByIdAndUpdate(
     "url_count",
@@ -56,12 +47,15 @@ exports.getOriginalUrl = catchAsync(async (req, res, next) => {
 
   if (!url) return next(new AppError("This short URL is not found", 404));
 
-  res.redirect(url.originalUrl);
+  res.redirect(301, url.originalUrl);
 
-  await Url.updateOne(
-    { shortCode: req.params.shortCode },
-    { $inc: { clicks: 1 } },
-  ).exec();
+  Url.updateOne({ shortCode: req.params.shortCode }, { $inc: { clicks: 1 } });
+
+  const analyticsData = collectAnalytics(req);
+  Click.create({
+    shortCode: req.params.shortCode,
+    ...analyticsData,
+  }).exec();
 });
 
 exports.deleteUrl = catchAsync(async (req, res, next) => {
@@ -69,5 +63,6 @@ exports.deleteUrl = catchAsync(async (req, res, next) => {
 
   if (!url) return next(new AppError("This short URL is not found", 404));
 
+  await Click.deleteMany({ shortCode: req.params.shortCode });
   res.status(204).send();
 });

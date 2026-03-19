@@ -40,22 +40,25 @@ exports.createShortUrl = catchAsync(async (req, res, next) => {
 });
 
 exports.getOriginalUrl = catchAsync(async (req, res, next) => {
-  // still here we need the caching layer
+  // TODO : still here we need the caching layer
   const url = await Url.findOne({ shortCode: req.params.shortCode })
     .select("originalUrl")
     .lean();
 
   if (!url) return next(new AppError("This short URL is not found", 404));
 
-  res.redirect(301, url.originalUrl);
-
-  Url.updateOne({ shortCode: req.params.shortCode }, { $inc: { clicks: 1 } });
+  Url.updateOne(
+    { shortCode: req.params.shortCode },
+    { $inc: { clicks: 1 } },
+  ).catch(() => {});
 
   const analyticsData = collectAnalytics(req);
   Click.create({
     shortCode: req.params.shortCode,
     ...analyticsData,
-  }).exec();
+  }).catch(() => {});
+
+  res.redirect(301, url.originalUrl);
 });
 
 exports.deleteUrl = catchAsync(async (req, res, next) => {

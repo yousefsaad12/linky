@@ -15,3 +15,11 @@ exports.createUrlLimiter = rateLimit({
   legacyHeaders: false,
   message: "Too many URLs created from this IP, try later.",
 });
+
+exports.analyticsLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: "Too many requests, please slow down.",
+});

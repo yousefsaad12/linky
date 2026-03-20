@@ -1,48 +1,60 @@
-const mongoose = require('mongoose');
-const Url = require('./models/urlModel');
-const Counter = require('./models/counterModel');
-require('dotenv').config({ path: './config.env' }); // same as your server
-const encodeBase62 = require("./utils/base62")
+const mongoose = require("mongoose");
+const Url = require("./models/urlModel");
+const Counter = require("./models/counterModel");
+require("dotenv").config();
+const encodeBase62 = require("./utils/base62");
+
+const SEED_COUNT = 200000;
+const CHUNK_SIZE = 5000;
 
 async function seed() {
-  // Same connection as your server
   const DB = process.env.DATABASE.replace(
-    '<PASSWORD>',
+    "<PASSWORD>",
     process.env.DATABASE_PASSWORD
   );
 
-  await mongoose.connect(DB);
-  console.log('Connected to MongoDB ✓');
+  await mongoose.connect(DB, {
+    maxPoolSize: 20,
+  });
 
-  // Clear old data
+  console.log("Connected to MongoDB ✓");
+
+  // Clean old data
   await Url.deleteMany({});
   await Counter.deleteMany({});
-  console.log('Old data cleared ✓');
+  console.log("Old data cleared ✓");
 
-  // Reset counter to 1000 (matching how many docs we insert)
-  await Counter.create({ _id: 'url', seq: 1000 });
-  console.log('Counter reset to 1000 ✓');
+  // Reset counter
+  await Counter.create({ _id: "url_count", seq: SEED_COUNT });
+  console.log(`Counter set to ${SEED_COUNT} ✓`);
 
-  // Insert 1000 urls
-  const docs = [];
-  for (let i = 1; i <= 1000; i++) {
-    docs.push({
-      shortCode: encodeBase62(i),
-      originalUrl: `https://github.com/user/repository-${i}`,
-      clicks: 0,
-      createdAt: new Date(),
-      expiresAt: new Date('2031-01-01'),
-    });
+  console.log("Seeding started...");
+
+  for (let i = 1; i <= SEED_COUNT; i += CHUNK_SIZE) {
+    const batch = [];
+
+    for (let j = i; j < i + CHUNK_SIZE && j <= SEED_COUNT; j++) {
+      batch.push({
+        shortCode: encodeBase62(j),
+        originalUrl: `https://github.com/user/repository-${j}`,
+        createdAt: new Date(),
+      });
+    }
+
+    await Url.insertMany(batch, { ordered: false });
+
+    console.log(`Inserted: ${i} → ${Math.min(i + CHUNK_SIZE - 1, SEED_COUNT)}`);
   }
 
-  await Url.insertMany(docs);
-  console.log('✓ 1000 documents inserted. Sample:');
-  [1, 10, 62, 100, 1000].forEach(n =>
-    console.log(`  counter ${n} → shortCode "${encodeBase62(n)}"`)
+  console.log(`✓ ${SEED_COUNT.toLocaleString()} documents inserted`);
+
+  console.log("Sample mapping:");
+  [1, 10, 62, 100, SEED_COUNT].forEach((n) =>
+    console.log(`  ${n} → ${encodeBase62(n)}`)
   );
 
   await mongoose.disconnect();
-  console.log('Done ✓');
+  console.log("Done ✓");
 }
 
 seed().catch(console.error);

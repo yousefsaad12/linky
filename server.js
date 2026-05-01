@@ -8,7 +8,7 @@ if (!process.env.DATABASE || !process.env.DATABASE_PASSWORD) {
 }
 
 const DB = process.env.DATABASE.replace(
-  "<PASSWORD>",
+  "<db_password>",
   process.env.DATABASE_PASSWORD
 );
 

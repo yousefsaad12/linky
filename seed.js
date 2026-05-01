@@ -4,12 +4,12 @@ const Counter = require("./models/counterModel");
 require("dotenv").config();
 const encodeBase62 = require("./utils/base62");
 
-const SEED_COUNT = 200000;
+const SEED_COUNT = 100000;
 const CHUNK_SIZE = 5000;
 
 async function seed() {
   const DB = process.env.DATABASE.replace(
-    "<PASSWORD>",
+    "<db_password>",
     process.env.DATABASE_PASSWORD
   );
 

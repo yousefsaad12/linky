@@ -5,6 +5,12 @@ const encodeBase62 = require("./../utils/base62");
 const catchAsync = require("./../utils/catchAsync");
 const AppError = require("../utils/AppError");
 const collectAnalytics = require("./../utils/collectAnalytics");
+const {
+  getRedisClient,
+  getCacheTtlSeconds,
+  urlCacheKey,
+} = require("./../utils/redisClient");
+const { scheduleAnalytics } = require("./../utils/scheduleAnalytics");
 
 exports.getAllUrls = catchAsync(async (req, res, next) => {
   const urls = await Url.find();
@@ -40,25 +46,35 @@ exports.createShortUrl = catchAsync(async (req, res, next) => {
 });
 
 exports.getOriginalUrl = catchAsync(async (req, res, next) => {
-  // TODO : still here we need the caching layer
-  const url = await Url.findOne({ shortCode: req.params.shortCode })
+  const redis = await getRedisClient();
+  const shortCode = req.params.shortCode;
+
+  if (redis) {
+    const cachedUrl = await redis.get(urlCacheKey(shortCode));
+
+    if (cachedUrl) {
+      scheduleAnalytics(res, req, shortCode);
+
+      return res.redirect(302, cachedUrl);
+    }
+  }
+  const url = await Url.findOne({ shortCode: shortCode })
     .select("originalUrl")
     .lean();
 
   if (!url) return next(new AppError("This short URL is not found", 404));
 
-  Url.updateOne(
-    { shortCode: req.params.shortCode },
-    { $inc: { clicks: 1 } },
-  ).catch(() => {});
+  if (redis) {
+    redis
+      .set(urlCacheKey(shortCode), url.originalUrl, {
+        EX: getCacheTtlSeconds(),
+      })
+      .catch(() => {});
+  }
 
-  const analyticsData = collectAnalytics(req);
-  Click.create({
-    shortCode: req.params.shortCode,
-    ...analyticsData,
-  }).catch(() => {});
+  scheduleAnalytics(res, req, shortCode);
 
-  res.redirect(301, url.originalUrl);
+  res.redirect(302, url.originalUrl);
 });
 
 exports.deleteUrl = catchAsync(async (req, res, next) => {

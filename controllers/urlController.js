@@ -46,35 +46,34 @@ exports.createShortUrl = catchAsync(async (req, res, next) => {
 });
 
 exports.getOriginalUrl = catchAsync(async (req, res, next) => {
+  const { shortCode } = req.params;
   const redis = await getRedisClient();
-  const shortCode = req.params.shortCode;
 
   if (redis) {
-    const cachedUrl = await redis.get(urlCacheKey(shortCode));
-
-    if (cachedUrl) {
-      scheduleAnalytics(res, req, shortCode);
-
-      return res.redirect(302, cachedUrl);
+    const cached = await redis.get(urlCacheKey(shortCode));
+    if (cached) {
+      scheduleAnalytics(req, res, shortCode);
+      return res.status(200).json({
+        status: "success",
+        cached: true,
+        data: { shortCode, originalUrl: cached },
+      });
     }
   }
-  const url = await Url.findOne({ shortCode: shortCode })
-    .select("originalUrl")
-    .lean();
 
-  if (!url) return next(new AppError("This short URL is not found", 404));
+  const url = await Url.findOne({ shortCode }).select("originalUrl").lean();
+  if (!url) return next(new AppError("Short URL not found", 404));
 
-  if (redis) {
-    redis
-      .set(urlCacheKey(shortCode), url.originalUrl, {
-        EX: getCacheTtlSeconds(),
-      })
-      .catch(() => {});
-  }
+  redis
+    ?.set(urlCacheKey(shortCode), url.originalUrl, { EX: getCacheTtlSeconds() })
+    .catch(() => {});
+  scheduleAnalytics(req, res, shortCode);
 
-  scheduleAnalytics(res, req, shortCode);
-
-  res.redirect(302, url.originalUrl);
+  return res.status(200).json({
+    status: "success",
+    cached: false,
+    data: { shortCode, originalUrl: url.originalUrl },
+  });
 });
 
 exports.deleteUrl = catchAsync(async (req, res, next) => {

@@ -2,39 +2,27 @@ const autocannon = require("autocannon");
 const encodeBase62 = require("./utils/base62");
 
 const BASE_URL = process.env.BASE_URL || "http://127.0.0.1:3000";
-const DURATION = 60;
+const DURATION = Number(process.env.DURATION) || 10;
+const KEYSPACE = Number(process.env.KEYSPACE) || 100_000;
 
-const READ_RPS = 1000;
-const WRITE_RPS = 10;
+const randomCode = () => encodeBase62((Math.random() * KEYSPACE + 1) | 0);
 
-const KEYSPACE = 100000;
-
-const rand = (n) => (Math.random() * n) | 0;
-
-const randomCode = () => encodeBase62(rand(KEYSPACE) + 1);
-
-function run({ method, path, rps, connections }) {
+function run({ title, method, path, connections, body }) {
   return new Promise((resolve) => {
+    console.log(`\n📊 ${title}`);
+
     const instance = autocannon({
       url: BASE_URL,
       duration: DURATION,
       connections,
-      overallRate: rps,
-
+      timeout: 10,
       requests: [
         {
           method,
-          path,
-          headers: method === "POST"
-            ? { "content-type": "application/json" }
-            : {},
-
+          headers: body ? { "content-type": "application/json" } : {},
           setupRequest(req) {
-            if (method === "POST") {
-              req.body = JSON.stringify({
-                originalUrl: "https://test.com/test"
-              });
-            }
+            req.path = method === "GET" ? `/api/v1/url/${randomCode()}` : path;
+            if (body) req.body = body;
             return req;
           },
         },
@@ -46,23 +34,30 @@ function run({ method, path, rps, connections }) {
   });
 }
 
-(async function () {
-  console.log("🚀 Benchmark");
+(async () => {
+  console.log("🚀 Starting benchmarks...\n");
 
-  const read = await run({
-    method: "GET",
-    path: `/api/v1/url/${randomCode()}`,
-    rps: READ_RPS,
-    connections: 50,
-  });
+  const [read, write] = await Promise.all([
+    run({
+      title: "GET /url/:shortCode (50 connections)",
+      method: "GET",
+      path: "/api/v1/url",
+      connections: 15,
+    }),
+    run({
+      title: "POST /url (2 connections)",
+      method: "POST",
+      path: "/api/v1/url",
+      connections: 2,
+      body: JSON.stringify({ originalUrl: "https://test.com/test" }),
+    }),
+  ]);
 
-  const write = await run({
-    method: "POST",
-    path: "/api/v1/url",
-    rps: WRITE_RPS,
-    connections: 10,
-  });
+  const fmt = (r) =>
+    `avg ${r.requests.average} req/s | p99 latency ${r.latency.p99}ms | errors ${r.errors}`;
 
-  console.log("\nREAD:", read.requests.average);
-  console.log("WRITE:", write.requests.average);
+  console.log("\n── Results ──────────────────────────");
+  console.log(`READ  ${fmt(read)}`);
+  console.log(`WRITE ${fmt(write)}`);
+  console.log("─────────────────────────────────────");
 })();

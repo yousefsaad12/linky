@@ -1,21 +1,36 @@
+require("dotenv").config();
 
 const mongoose = require("mongoose");
-require("dotenv").config(); 
 const app = require("./app");
+const { assertRedisReady } = require("./utils/redisClient");
 
 if (!process.env.DATABASE || !process.env.DATABASE_PASSWORD) {
-  throw new Error("Please define DATABASE and DATABASE_PASSWORD in .env");
+  throw new Error("Missing DATABASE or DATABASE_PASSWORD in .env");
 }
 
-const DB = process.env.DATABASE.replace(
-  "<db_password>",
-  process.env.DATABASE_PASSWORD
-);
+const DB = process.env.DATABASE_PASSWORD
+  ? process.env.DATABASE.replace("<db_password>", process.env.DATABASE_PASSWORD)
+  : process.env.DATABASE;
 
-mongoose
-  .connect(DB)
-  .then(() => console.log("DB connection successful!"))
-  .catch(err => console.log("DB connection error:", err));
+async function startServer() {
+  try {
+    await mongoose.connect(DB, { maxPoolSize: 5, minPoolSize: 0, serverSelectionTimeoutMS: 3000 });
+    console.log("✅ DB connected!");
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`App running on port ${port}...`));
+    await assertRedisReady().catch(() => console.warn("⚠️ Redis unavailable, continuing without it"));
+
+    require("./workers/analyticsWorker");
+    console.log("✅ Analytics worker started!");
+
+    const port = process.env.PORT || 3000;
+    app.listen(port, () => {
+      console.log(`🚀 App running on port ${port}`);
+      
+    });
+  } catch (err) {
+    console.error("❌ Startup failed:", err.message);
+    process.exit(1);
+  }
+}
+
+startServer();

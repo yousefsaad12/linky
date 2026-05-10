@@ -1,59 +1,35 @@
 const { createClient } = require("redis");
 const AppError = require("./AppError");
 
-let client;
-let connectPromise;
-
-function isRedisConfigured() {
-  return Boolean(process.env.REDIS_URL);
-}
-
-function assertValidRedisUrl(rawUrl) {
-  try {
-    const parsed = new URL(rawUrl);
-    if (parsed.protocol !== "redis:" && parsed.protocol !== "rediss:") {
-      throw new Error("REDIS_URL must start with redis:// or rediss://");
-    }
-  } catch (e) {
-    throw new AppError(
-      `Invalid REDIS_URL configuration: ${e?.message || "unknown error"}`,
-      500,
-    );
-  }
-}
+let client = null;
 
 async function getRedisClient() {
-  if (!isRedisConfigured()) return null;
-  assertValidRedisUrl(process.env.REDIS_URL);
+  if (!process.env.REDIS_URL) return null;
 
   if (!client) {
-    client = createClient({ url: process.env.REDIS_URL });
-    client.on("error", () => {
-      // keep the app running even if redis is down
+    client = createClient({
+      url: process.env.REDIS_URL,
+      socket: {
+        reconnectStrategy: (n) => n >= 10 ? new Error("Max retries") : Math.min(n * 100, 3000),
+      },
     });
+    client.on("error", (err) => console.error("[Redis]", err.message));
+    await client.connect();
   }
 
-  if (!connectPromise) {
-    connectPromise = client.connect().catch(() => null);
-  }
-
-  await connectPromise;
-  return client?.isOpen ? client : null;
+  return client.isOpen ? client : null;
 }
 
-function getCacheTtlSeconds() {
-  const raw = process.env.REDIS_TTL_SECONDS;
-  const ttl = raw ? Number(raw) : 24 * 60 * 60; // 1 day
-  return Number.isFinite(ttl) && ttl > 0 ? Math.floor(ttl) : 24 * 60 * 60;
+async function assertRedisReady() {
+  if (!(await getRedisClient())) throw new AppError("Redis unavailable", 500);
+  console.log("✅ Redis connected!");
 }
 
-function urlCacheKey(shortCode) {
-  return `url:${shortCode}`;
-}
-
-module.exports = {
-  getRedisClient,
-  getCacheTtlSeconds,
-  urlCacheKey,
+const getCacheTtlSeconds = () => {
+  const ttl = Number(process.env.REDIS_TTL_SECONDS);
+  return Number.isFinite(ttl) && ttl > 0 ? Math.floor(ttl) : 86400;
 };
 
+const urlCacheKey = (shortCode) => `url:${shortCode}`;
+
+module.exports = { getRedisClient, assertRedisReady, getCacheTtlSeconds, urlCacheKey };

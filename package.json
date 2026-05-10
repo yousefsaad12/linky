@@ -7,12 +7,16 @@
     "start": "nodemon server.js",
     "start:prod": "cross-env NODE_ENV=production nodemon server.js",
     "start:dev": "cross-env NODE_ENV=development nodemon server.js",
+    "worker": "nodemon worker.js",
+    "worker:prod": "cross-env NODE_ENV=production nodemon worker.js",
+    "worker:dev": "cross-env NODE_ENV=development nodemon worker.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "autocannon": "^8.0.0",
+    "bullmq": "^5.76.6",
     "cross-env": "^10.1.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",

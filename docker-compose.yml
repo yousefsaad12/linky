@@ -1,0 +1,38 @@
+services:
+  redis-cache:
+    image: redis:7-alpine
+    container_name: linky_redis_cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_cache_data:/data
+    command: >
+      redis-server
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --save ""
+      --appendonly no
+      --tcp-backlog 511
+      --maxclients 1000
+      --hz 20
+      --loglevel warning
+    restart: unless-stopped
+
+  redis-queue:
+    image: redis:7-alpine
+    container_name: linky_redis_queue
+    ports:
+      - "6380:6379"
+    command: >
+      redis-server
+      --maxmemory 512mb
+      --maxmemory-policy noeviction
+      --appendonly yes
+      --tcp-backlog 511
+      --maxclients 500
+      --hz 20
+      --loglevel warning
+    restart: unless-stopped
+
+volumes:
+  redis_cache_data:

@@ -3,7 +3,7 @@ const AppError = require("./../utils/AppError");
 
 exports.redirectLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  limit: 1000,
+  limit: 1_000_000,
   standardHeaders: true,
   legacyHeaders: false,
 
@@ -14,7 +14,7 @@ exports.redirectLimiter = rateLimit({
 
 exports.createUrlLimiter = rateLimit({
   windowMs: 60 * 1000,
-  limit: 30, // protect system from spam
+  limit: 1_000_000, // protect system from spam
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res, next) => {
@@ -26,7 +26,7 @@ exports.createUrlLimiter = rateLimit({
 
 exports.analyticsLimiter = rateLimit({
   windowMs: 60 * 1000,
-  limit: 100,
+  limit: 1_000_000,
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res, next) => {

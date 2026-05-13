@@ -34,7 +34,8 @@ exports.createShortUrl = catchAsync(async (req, res, next) => {
   );
 
   const shortCode = encodeBase62(counterDoc.seq);
-  const shortUrl = process.env.BASE_URL + shortCode;
+  const base = (process.env.BASE_URL || "").replace(/\/+$/, "") + "/";
+  const shortUrl = base + shortCode;
   const url = await Url.create({ originalUrl, shortCode });
 
   return res.status(201).json({
@@ -49,33 +50,24 @@ exports.createShortUrl = catchAsync(async (req, res, next) => {
 exports.getOriginalUrl = catchAsync(async (req, res, next) => {
   const { shortCode } = req.params;
 
-  const cached = await getCache(urlCacheKey(shortCode));
-  if (cached) {
-    scheduleAnalytics(req, res, shortCode);
-    return res
-      .status(200)
-      .json({
-        status: "success",
-        cached: true,
-        data: { shortCode, originalUrl: cached },
-      });
+  let originalUrl = await getCache(urlCacheKey(shortCode));
+
+  if (!originalUrl) {
+    const url = await Url.findOne({ shortCode }).select("originalUrl").lean();
+
+    if (!url) {
+      return next(new AppError("Short URL not found", 404));
+    }
+
+    originalUrl = url.originalUrl;
+
+    await setCache(urlCacheKey(shortCode), originalUrl);
   }
 
-  const url = await Url.findOne({ shortCode }).select("originalUrl").lean();
-  if (!url) return next(new AppError("Short URL not found", 404));
-
-  await setCache(urlCacheKey(shortCode), url.originalUrl);
   scheduleAnalytics(req, res, shortCode);
 
-  return res
-    .status(200)
-    .json({
-      status: "success",
-      cached: false,
-      data: { shortCode, originalUrl: url.originalUrl },
-    });
+  return res.redirect(302, originalUrl);
 });
-
 exports.deleteUrl = catchAsync(async (req, res, next) => {
   const url = await Url.findOneAndDelete({ shortCode: req.params.shortCode });
   if (!url) return next(new AppError("This short URL is not found", 404));

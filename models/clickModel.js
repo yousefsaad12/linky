@@ -30,9 +30,13 @@ const clickSchema = mongoose.Schema({
     default: "direct",
   },
 
+  /** BullMQ job id — unique so retries do not insert duplicate click rows */
+  jobId: { type: String },
+
   clickedAt: { type: Date, default: Date.now },
 });
 
 clickSchema.index({ shortCode: 1, clickedAt: -1 });
+clickSchema.index({ jobId: 1 }, { unique: true, sparse: true });
 clickSchema.index({ clickedAt: 1 }, { expireAfterSeconds: years(5) });
 module.exports = mongoose.model("Click", clickSchema);

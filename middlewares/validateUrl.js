@@ -1,38 +1,29 @@
 const validator = require("validator");
+const AppError = require("../utils/AppError");
 
-const validateUrl = async (req, res, next) => {
-  try {
-    const { originalUrl } = req.body;
-    if (!originalUrl)
-      return res
-        .status(400)
-        .json({ status: "fail", message: "original URL is required" });
+const validateUrl = (req, res, next) => {
+  const { originalUrl } = req.body;
 
-    if (
-      !validator.isURL(originalUrl, {
-        protocols: ["http", "https"],
-        require_protocol: true,
-      })
-    ) {
-      return res.status(400).json({
-        status: "fail",
-        message: "Invalid URL format",
-      });
-    }
-
-    if (originalUrl.length > 2048)
-      return res.status(400).json({
-        status: "fail",
-        message: "URL too long",
-      });
-
-    next();
-  } catch (error) {
-    res.status(500).json({
-      status: "error",
-      message: "URL validation failed",
-    });
+  if (!originalUrl) {
+    return next(new AppError("Original URL is required", 400));
   }
+
+  if (
+    !validator.isURL(originalUrl, {
+      protocols: ["http", "https"],
+      require_protocol: true,
+    })
+  ) {
+    return next(new AppError("Invalid URL format", 400));
+  }
+
+  if (originalUrl.length > 2048) {
+    return next(new AppError("URL too long", 400));
+  }
+
+  next();
 };
+
+
 
 module.exports = validateUrl;

@@ -6,9 +6,10 @@ const collectAnalytics = (req) => {
   const parser = new UAParser(req.headers["user-agent"]);
   const device = parser.getDevice().type;
 
-  // Get IP
-  const ip =
-    req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.remoteAddress;
+  const forwarded = req.headers["x-forwarded-for"];
+  const ip = forwarded
+    ? forwarded.split(",")[0].trim()
+    : req.socket.remoteAddress;
 
   // Geo lookup
   const geo = geoip.lookup(ip);
@@ -21,7 +22,9 @@ const collectAnalytics = (req) => {
         ? "mobile"
         : device === "tablet"
           ? "tablet"
-          : "desktop",
+          : device
+            ? "desktop"
+            : "unknown",
     referrer: req.headers["referer"] || "direct",
     region: geo?.region || "unknown",
     city: geo?.city || "unknown",

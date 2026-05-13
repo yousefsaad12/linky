@@ -117,50 +117,7 @@ Edit `.env` with your configuration (see [Environment Setup](#-environment-setup
 
 ---
 
-## ⚙️ Environment Setup
 
-Create a `.env` file in the root directory:
-
-```env
-# Database
-DATABASE_LOCAL=mongodb://localhost:27017/
-DATABASE=mongodb+srv://username:<PASSWORD>@cluster.mongodb.net/?appName=Url
-DATABASE_PASSWORD=your_secure_password
-NODE_ENV=development
-
-# Server
-PORT=3000
-BASE_URL=https://your-domain.com/
-
-# Redis Cache
-REDIS_CACHE_URL=redis://localhost:6379
-REDIS_TTL_SECONDS=3600
-
-# Redis Queue (BullMQ)
-REDIS_QUEUE_HOST=localhost
-REDIS_QUEUE_PORT=6380
-
-# Worker
-ANALYTICS_WORKER_CONCURRENCY=10
-```
-
-### Environment Variables Explained
-
-| Variable                       | Purpose                        | Default                      |
-| ------------------------------ | ------------------------------ | ---------------------------- |
-| `DATABASE_LOCAL`               | Local MongoDB connection       | `mongodb://localhost:27017/` |
-| `DATABASE`                     | Production MongoDB Atlas URI   | Required in production       |
-| `DATABASE_PASSWORD`            | Password placeholder for Atlas | Required                     |
-| `NODE_ENV`                     | Application environment        | `development`                |
-| `PORT`                         | Server port                    | `3000`                       |
-| `BASE_URL`                     | Base URL for short codes       | Required                     |
-| `REDIS_CACHE_URL`              | Redis cache connection         | `redis://localhost:6379`     |
-| `REDIS_TTL_SECONDS`            | Cache TTL in seconds           | `3600`                       |
-| `REDIS_QUEUE_HOST`             | Redis queue host               | `localhost`                  |
-| `REDIS_QUEUE_PORT`             | Redis queue port               | `6380`                       |
-| `ANALYTICS_WORKER_CONCURRENCY` | Worker thread concurrency      | `10`                         |
-
----
 
 ## 🏃 Running the Application
 

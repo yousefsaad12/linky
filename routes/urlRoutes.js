@@ -1,5 +1,6 @@
 const express = require("express");
 const urlController = require("./../controllers/urlController");
+const authController = require("./../controllers/authController");
 const urlRouter = express.Router();
 const validateUrl = require("./../middlewares/validateUrl");
 const {
@@ -9,7 +10,7 @@ const {
 urlRouter
   .route("/")
   .post(createUrlLimiter, validateUrl, urlController.createShortUrl)
-  .get(urlController.getAllUrls);
+  .get(authController.protect, urlController.getAllUrls);
 
 urlRouter
   .route("/:shortCode")

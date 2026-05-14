@@ -24,6 +24,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, "Please provide a password"],
     minlength: [7, "Password must be at least 7 characters long"],
+    select : false
   },
   passwordConfirm: {
     type: String,
@@ -36,6 +37,7 @@ const userSchema = new mongoose.Schema({
       message: "Passwords do not match",
     },
   },
+  passwordChangedAt: Date,
 });
 
 userSchema.pre("save", async function () {
@@ -44,5 +46,17 @@ userSchema.pre("save", async function () {
   this.passwordConfirm = undefined;
 });
 
+userSchema.methods.validatingPassword = async function (candidatePassword) {
+  const valid = await bcrypt.compare(candidatePassword, this.password);
+  return valid;
+};
 
+userSchema.methods.validatingToken = function (iat) {
+  if (!this.passwordChangedAt) return true;
+  const changedTimestamp = parseInt(
+    this.passwordChangedAt.getTime() / 1000,
+    10,
+  );
+  return iat > changedTimestamp;
+};
 module.exports = mongoose.model("User", userSchema);

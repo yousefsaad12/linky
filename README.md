@@ -472,7 +472,7 @@ ISC
 ## 👤 Author
 
 **Your Name**  
-GitHub: [@yourusername](https://github.com/yourusername)
+GitHub: [@yousefsaad12](https://github.com/yousefsaad12)
 
 ---
 
@@ -481,7 +481,7 @@ GitHub: [@yourusername](https://github.com/yourusername)
 For issues, questions, or suggestions:
 
 - Open an issue on GitHub
-- Email: your.email@example.com
+- Email: ysaad.dev@gmail.com
 
 ---
 

@@ -3,6 +3,7 @@ const urlRouter = require("./routes/urlRoutes");
 const globalErrorHandler = require("./middlewares/errorMiddleware");
 const AppError = require("./utils/appError"); 
 const authRouter = require("./routes/authRoutes");
+const analyticsRouter = require("./routes/analyticsRoutes");
 const passport = require("passport");
 require("./config/passport");
 const app = express();
@@ -13,6 +14,7 @@ app.use(require("cookie-parser")());
 
 app.use("/api/v1/url", urlRouter);
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/analytics", analyticsRouter);
 
 app.use((req, res, next) => {
   next(new AppError(`Can not find ${req.originalUrl} on this server !`, 404));

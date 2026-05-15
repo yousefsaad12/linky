@@ -14,6 +14,7 @@ A high-performance URL shortening service built with **Express**, **MongoDB**, *
 - [Environment Setup](#-environment-setup)
 - [Running the Application](#-running-the-application)
 - [API Endpoints](#-api-endpoints)
+- [Analytics API (Dashboard)](#-analytics-api-dashboard)
 - [Performance Benchmarks](#-performance-benchmarks)
 - [Project Structure](#-project-structure)
 - [Docker Deployment](#-docker-deployment)
@@ -217,6 +218,24 @@ curl http://localhost:3000/api/v1/url
   ]
 }
 ```
+
+### Analytics API (Dashboard)
+
+Protected endpoints for dashboards (charts, KPIs, top links, activity feed). Full documentation with examples and response fields:
+
+**[ANALYTICS-API.md](./ANALYTICS-API.md)**
+
+Base path: `/api/v1/analytics` (requires `jwt` cookie after Google login).
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /overview` | Dashboard KPIs, timeline, top links, breakdowns |
+| `GET /top-links` | Ranked links for a time period |
+| `GET /links` | Paginated links table |
+| `GET /recent-clicks` | Latest click events |
+| `GET /links/:shortCode` | Per-link analytics and charts |
+
+---
 
 ### 4. Delete Short URL
 

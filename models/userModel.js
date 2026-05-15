@@ -40,23 +40,5 @@ const userSchema = new mongoose.Schema({
   passwordChangedAt: Date,
 });
 
-userSchema.pre("save", async function () {
-  if (!this.isModified("password")) return;
-  this.password = await bcrypt.hash(this.password, 12);
-  this.passwordConfirm = undefined;
-});
 
-userSchema.methods.validatingPassword = async function (candidatePassword) {
-  const valid = await bcrypt.compare(candidatePassword, this.password);
-  return valid;
-};
-
-userSchema.methods.validatingToken = function (iat) {
-  if (!this.passwordChangedAt) return true;
-  const changedTimestamp = parseInt(
-    this.passwordChangedAt.getTime() / 1000,
-    10,
-  );
-  return iat > changedTimestamp;
-};
 module.exports = mongoose.model("User", userSchema);

@@ -1,5 +1,5 @@
 const validator = require("validator");
-const AppError = require("../utils/AppError");
+const AppError = require("../utils/appError.js"); 
 
 const validateUrl = (req, res, next) => {
   const { originalUrl } = req.body;

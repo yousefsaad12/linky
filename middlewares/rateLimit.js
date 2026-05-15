@@ -1,5 +1,5 @@
 const rateLimit = require("express-rate-limit");
-const AppError = require("./../utils/AppError");
+const AppError = require("./../utils/appError.js");
 
 exports.redirectLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute

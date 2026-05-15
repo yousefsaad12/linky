@@ -1,5 +1,5 @@
 const { createClient } = require("redis");
-const AppError = require("./AppError");
+const AppError = require("./appError.js");
 
 let client = null;
 let connecting = null;

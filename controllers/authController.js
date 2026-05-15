@@ -1,8 +1,8 @@
 const jwt = require("jsonwebtoken");
-const catchAsync = require("../utils/catchAsync");
-const AppError = require("../utils/AppError");
-const User = require("../models/userModel");
 const { promisify } = require("util");
+const catchAsync = require("../utils/catchAsync");
+const AppError = require("../utils/appError.js");
+const User = require("../models/userModel");
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -10,13 +10,17 @@ const signToken = (id) => {
   });
 };
 
+const jwtCookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax",
+};
+
 exports.googleCallback = (req, res) => {
   const token = signToken(req.user._id);
 
   res.cookie("jwt", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    ...jwtCookieOptions,
     maxAge: 10 * 24 * 60 * 60 * 1000, // match JWT expiry
   });
 
@@ -48,3 +52,12 @@ exports.protect = catchAsync(async (req, res, next) => {
   req.user = user;
   next();
 });
+
+exports.logout = (req, res) => {
+  res.clearCookie("jwt", jwtCookieOptions);
+
+  res.status(200).json({
+    status: "success",
+    message: "Logged out successfully",
+  });
+};

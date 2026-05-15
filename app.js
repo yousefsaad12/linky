@@ -1,7 +1,7 @@
 const express = require("express");
 const urlRouter = require("./routes/urlRoutes");
 const globalErrorHandler = require("./middlewares/errorMiddleware");
-const AppError = require("./utils/AppError");
+const AppError = require("./utils/appError"); 
 const authRouter = require("./routes/authRoutes");
 const passport = require("passport");
 require("./config/passport");

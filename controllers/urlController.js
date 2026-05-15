@@ -3,7 +3,7 @@ const Counter = require("./../models/counterModel");
 const Click = require("./../models/clickModel");
 const encodeBase62 = require("./../utils/base62");
 const catchAsync = require("./../utils/catchAsync");
-const AppError = require("../utils/AppError");
+const AppError = require("../utils/appError.js");
 const {
   urlCacheKey,
   getCache,

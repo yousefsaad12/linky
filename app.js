@@ -1,16 +1,35 @@
 const express = require("express");
-const urlRouter = require("./routes/urlRoutes");
-const globalErrorHandler = require("./middlewares/errorMiddleware");
-const AppError = require("./utils/appError"); 
-const authRouter = require("./routes/authRoutes");
-const analyticsRouter = require("./routes/analyticsRoutes");
+const helmet = require("helmet");
+const mongoSanitize = require("express-mongo-sanitize");
+const xss = require("xss");
+const cookieParser = require("cookie-parser");
+
 const passport = require("passport");
 require("./config/passport");
+
+const urlRouter = require("./routes/urlRoutes");
+const authRouter = require("./routes/authRoutes");
+const analyticsRouter = require("./routes/analyticsRoutes");
+const globalErrorHandler = require("./middlewares/errorMiddleware");
+const AppError = require("./utils/appError");
+
 const app = express();
-app.use(express.json());
+
+app.use(helmet());
+
+app.use(express.json({ limit: "10kb" }));
+app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+app.use(cookieParser());
+
+app.use(mongoSanitize());
+app.use((req, res, next) => {
+  if (req.body) req.body = JSON.parse(xss(JSON.stringify(req.body)));
+  if (req.query) req.query = JSON.parse(xss(JSON.stringify(req.query)));
+  if (req.params) req.params = JSON.parse(xss(JSON.stringify(req.params)));
+  next();
+});
 
 app.use(passport.initialize());
-app.use(require("cookie-parser")());
 
 app.use("/api/v1/url", urlRouter);
 app.use("/api/v1/auth", authRouter);

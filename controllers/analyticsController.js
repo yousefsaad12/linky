@@ -3,6 +3,7 @@ const Click = require("../models/clickModel");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError.js");
 const { parsePeriod, clickMatch } = require("../utils/parsePeriod");
+const { userUrlFilter, scopeClickMatch } = require("../utils/userScope");
 const {
   breakdown,
   clicksOverTime,
@@ -17,10 +18,23 @@ const periodWindows = () => ({
   last30d: new Date(Date.now() - 30 * MS_DAY),
 });
 
+const scopedWindowsMatch = async (userId, sinceDate) => {
+  const base = await scopeClickMatch(userId, sinceDate);
+  if (!base) return { shortCode: { $in: [] } };
+  return base;
+};
+
 exports.getOverview = catchAsync(async (req, res) => {
   const { period, since } = parsePeriod(req.query.period);
-  const match = clickMatch(since);
+  const match = await scopeClickMatch(req.user._id, since);
   const windows = periodWindows();
+  const ownerFilter = userUrlFilter(req.user._id);
+
+  const [todayMatch, last7dMatch, last30dMatch] = await Promise.all([
+    scopedWindowsMatch(req.user._id, windows.today),
+    scopedWindowsMatch(req.user._id, windows.last7d),
+    scopedWindowsMatch(req.user._id, windows.last30d),
+  ]);
 
   const [
     totalUrls,
@@ -37,23 +51,20 @@ exports.getOverview = catchAsync(async (req, res) => {
     timeline,
     topLinks,
   ] = await Promise.all([
-    Url.countDocuments(),
-    Click.countDocuments(),
-    since ? Click.countDocuments(match) : Click.countDocuments(),
-    Click.countDocuments({ clickedAt: { $gte: windows.today } }),
-    Click.countDocuments({ clickedAt: { $gte: windows.last7d } }),
-    Click.countDocuments({ clickedAt: { $gte: windows.last30d } }),
+    Url.countDocuments(ownerFilter),
+    Click.countDocuments(match),
+    Click.countDocuments(match),
+    Click.countDocuments(todayMatch),
+    Click.countDocuments(last7dMatch),
+    Click.countDocuments(last30dMatch),
     since
       ? Click.distinct("shortCode", match).then((codes) => codes.length)
-      : Url.countDocuments({ clicks: { $gt: 0 } }),
+      : Url.countDocuments({ ...ownerFilter, clicks: { $gt: 0 } }),
     breakdown(match, "deviceType"),
     breakdown(match, "browser"),
     breakdown(match, "referrer", 15),
     breakdown(match, "region"),
-    clicksOverTime(
-      match,
-      period === "24h" ? "hour" : "day",
-    ),
+    clicksOverTime(match, period === "24h" ? "hour" : "day"),
     topLinksByPeriod(match, Number(req.query.limit) || 5),
   ]);
 
@@ -84,7 +95,7 @@ exports.getOverview = catchAsync(async (req, res) => {
 
 exports.getTopLinks = catchAsync(async (req, res) => {
   const { period, since } = parsePeriod(req.query.period);
-  const match = clickMatch(since);
+  const match = await scopeClickMatch(req.user._id, since);
   const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 50);
 
   const links = await topLinksByPeriod(match, limit);
@@ -102,15 +113,16 @@ exports.getLinksTable = catchAsync(async (req, res) => {
   const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
   const skip = (page - 1) * limit;
   const sort = req.query.sort === "clicks" ? { clicks: -1 } : { createdAt: -1 };
+  const filter = userUrlFilter(req.user._id);
 
   const [urls, total] = await Promise.all([
-    Url.find()
+    Url.find(filter)
       .sort(sort)
       .skip(skip)
       .limit(limit)
       .select("shortCode originalUrl clicks createdAt updatedAt")
       .lean(),
-    Url.countDocuments(),
+    Url.countDocuments(filter),
   ]);
 
   res.status(200).json({
@@ -123,13 +135,16 @@ exports.getLinksTable = catchAsync(async (req, res) => {
   });
 });
 
-exports.getRecentClicks = catchAsync(async (req, res) => {
+exports.getRecentClicks = catchAsync(async (req, res, next) => {
   const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
   const { shortCode } = req.query;
 
-  const filter = shortCode ? { shortCode } : {};
+  const match = await scopeClickMatch(req.user._id, null, shortCode || undefined);
+  if (match === null) {
+    return next(new AppError("Short URL not found", 404));
+  }
 
-  const clicks = await Click.find(filter)
+  const clicks = await Click.find(match)
     .sort({ clickedAt: -1 })
     .limit(limit)
     .select("-jobId -__v")
@@ -145,9 +160,11 @@ exports.getRecentClicks = catchAsync(async (req, res) => {
 exports.getUrlAnalytics = catchAsync(async (req, res, next) => {
   const { shortCode } = req.params;
   const { period, since } = parsePeriod(req.query.period);
-  const match = clickMatch(since, shortCode);
 
-  const url = await Url.findOne({ shortCode })
+  const url = await Url.findOne({
+    shortCode,
+    ...userUrlFilter(req.user._id),
+  })
     .select("shortCode originalUrl clicks createdAt updatedAt")
     .lean();
 
@@ -155,6 +172,7 @@ exports.getUrlAnalytics = catchAsync(async (req, res, next) => {
     return next(new AppError("Short URL not found", 404));
   }
 
+  const match = clickMatch(since, shortCode);
   const granularity =
     req.query.granularity === "hour" || period === "24h" ? "hour" : "day";
 

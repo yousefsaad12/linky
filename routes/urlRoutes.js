@@ -9,7 +9,12 @@ const {
 } = require("./../middlewares/rateLimit");
 urlRouter
   .route("/")
-  .post(createUrlLimiter, validateUrl, urlController.createShortUrl)
+  .post(
+    authController.protect,
+    createUrlLimiter,
+    validateUrl,
+    urlController.createShortUrl,
+  )
   .get(authController.protect, urlController.getAllUrls);
 
 urlRouter

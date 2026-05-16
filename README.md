@@ -163,8 +163,11 @@ docker-compose up
 ```bash
 curl -X POST http://localhost:3000/api/v1/url \
   -H "Content-Type: application/json" \
+  --cookie "jwt=YOUR_JWT_HERE" \
   -d '{"originalUrl": "https://www.example.com/very/long/url"}'
 ```
+
+Requires authentication (same `jwt` cookie as analytics).
 
 **Response:**
 
@@ -438,7 +441,7 @@ DURATION=120 npm run benchmark
 2. **Rotate credentials** — Change MongoDB/Redis passwords
 3. **Enable CORS** — Restrict cross-origin requests if needed
 4. **Implement rate limiting** — Currently set to 1M (needs tuning)
-5. **Add authentication** — Protect URL creation/deletion endpoints
+5. **Authentication** — URL create/list/delete require login; redirects stay public
 6. **Use HTTPS** — Always in production
 7. **Monitor logs** — Set up centralized logging
 
@@ -471,7 +474,8 @@ Expected response:
 
 ## 🛣️ Roadmap
 
-- [ ] User authentication and custom short codes
+- [x] User authentication (Google OAuth) and per-user URL ownership
+- [ ] Custom short codes
 - [ ] URL expiration dates
 - [ ] QR code generation
 - [ ] Real-time analytics dashboard

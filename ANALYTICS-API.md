@@ -10,6 +10,8 @@ All analytics routes live under:
 
 They are **protected**: you must be logged in (JWT in the `jwt` HTTP-only cookie set after Google OAuth). Unauthenticated requests receive `401 Not authenticated`.
 
+All metrics are **scoped to your account**: only clicks on short URLs you created (where `Url.user` matches your user id) are included. Legacy links without an owner are excluded.
+
 ---
 
 ## Table of contents
@@ -111,8 +113,8 @@ The API returns the resolved `period` string in the JSON so the UI can show the 
 
 | Field | Description |
 |-------|-------------|
-| `totalUrls` | Count of all short URLs |
-| `totalClicks` | Count of all click documents (all time) |
+| `totalUrls` | Count of your short URLs |
+| `totalClicks` | Count of click documents on your links (all time) |
 | `clicksInPeriod` | Clicks in the selected `period` (equals `totalClicks` when `period=all`) |
 | `clicksToday` | Clicks in the last 24 hours (fixed window, not tied to `period`) |
 | `clicksLast7d` | Clicks in the last 7 days (fixed) |
@@ -446,7 +448,8 @@ Error body shape follows the rest of the app (`AppError` / `errorMiddleware`).
 | `utils/analyticsAggregations.js` | Reusable aggregations: `breakdown`, `clicksOverTime`, `topLinksByPeriod` |
 | `app.js` | Mounts router at `/api/v1/analytics` |
 | `models/clickModel.js` | Source data for analytics (not modified by this API) |
-| `models/urlModel.js` | Link metadata and `clicks` counter |
+| `models/urlModel.js` | Link metadata, `user` owner, and `clicks` counter |
+| `utils/userScope.js` | Builds per-user filters for URLs and click aggregations |
 
 **Aggregation helpers** (`utils/analyticsAggregations.js`):
 

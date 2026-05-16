@@ -11,9 +11,10 @@ const {
   deleteCache,
 } = require("./../utils/redisClient");
 const { scheduleAnalytics } = require("./../utils/scheduleAnalytics");
+const { userUrlFilter } = require("./../utils/userScope");
 
 exports.getAllUrls = catchAsync(async (req, res, next) => {
-  const urls = await Url.find();
+  const urls = await Url.find(userUrlFilter(req.user._id));
 
   res.status(200).json({
     status: "success",
@@ -36,7 +37,11 @@ exports.createShortUrl = catchAsync(async (req, res, next) => {
   const shortCode = encodeBase62(counterDoc.seq);
   const base = (process.env.BASE_URL || "").replace(/\/+$/, "") + "/";
   const shortUrl = base + shortCode;
-  const url = await Url.create({ originalUrl, shortCode });
+  const url = await Url.create({
+    originalUrl,
+    shortCode,
+    user: req.user._id,
+  });
 
   return res.status(201).json({
     status: "success",
@@ -69,7 +74,10 @@ exports.getOriginalUrl = catchAsync(async (req, res, next) => {
   return res.redirect(302, originalUrl);
 });
 exports.deleteUrl = catchAsync(async (req, res, next) => {
-  const url = await Url.findOneAndDelete({ shortCode: req.params.shortCode });
+  const url = await Url.findOneAndDelete({
+    shortCode: req.params.shortCode,
+    ...userUrlFilter(req.user._id),
+  });
   if (!url) return next(new AppError("This short URL is not found", 404));
 
   await Click.deleteMany({ shortCode: req.params.shortCode });

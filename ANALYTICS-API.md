@@ -1,4 +1,4 @@
-# Analytics API
+# Linky Analytics API
 
 Dashboard-oriented endpoints that read from the **`Click`** collection (device, browser, OS, geo, referrer, timestamps) and the **`Url`** collection (link metadata and total click counts).
 

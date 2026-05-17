@@ -1,6 +1,8 @@
-# 🔗 URL Shortener
+# 🔗 Linky
 
-A high-performance URL shortening service built with **Express**, **MongoDB**, **Redis**, and **BullMQ**. Features real-time analytics, intelligent caching, and asynchronous job processing.
+**Developer-first link analytics** — a high-performance URL shortener API built with **Express**, **MongoDB**, **Redis**, and **BullMQ**. Fast redirects, rich click tracking, and a dashboard-ready analytics API.
+
+Companion landing UI: **URL Frontend** (Next.js).
 
 ---
 

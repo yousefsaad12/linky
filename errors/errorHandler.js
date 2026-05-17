@@ -1,21 +1,33 @@
-const AppError = require("./../utils/AppError");
+const AppError = require("../utils/appError");
 
-exports.handleCastErrorDB = (err) => {
-  const message = `Invalid ${err.path} : ${err.value}`;
-  return new AppError(message, 400);
+// MongoDB Cast Error
+const handleCastErrorDB = (err) =>
+  new AppError(`Invalid ${err.path}: ${err.value}`, 400);
+
+// Duplicate Key Error (11000)
+const handleDuplicateFieldsDB = (err) => {
+  const value = Object.values(err.keyValue || {})[0];
+  return new AppError(`Duplicate field value: ${value}`, 400);
 };
 
-exports.handleValidationErrorsDB = (err) => {
+// Validation Error
+const handleValidationErrorDB = (err) => {
   const errors = Object.values(err.errors).map((el) => el.message);
-  const message = `Invalid Input Data ${errors.join(",")}`;
-
-  return new AppError(message, 400);
+  return new AppError(`Invalid input data: ${errors.join(". ")}`, 400);
 };
 
-exports.handleDuplicateFieldDB = (err) => {
-  const message = `Duplicate field value : ${
-    Object.values(err.keyValue)[0]
-  }. Please use another value!`;
+// JWT Error
+const handleJWTError = () =>
+  new AppError("Invalid token. Please log in again.", 401);
 
-  return new AppError(message, 400);
+// JWT Expired
+const handleJWTExpiredError = () =>
+  new AppError("Your token has expired. Please log in again.", 401);
+
+module.exports = {
+  handleCastErrorDB,
+  handleDuplicateFieldsDB,
+  handleValidationErrorDB,
+  handleJWTError,
+  handleJWTExpiredError,
 };

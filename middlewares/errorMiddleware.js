@@ -1,54 +1,35 @@
-const {
-  handleCastErrorDB,
-  handleValidationErrorsDB,
-  handleDuplicateFieldDB,
-} = require("./../errors/errorHandler");
+const errorMap = require("../errors/errorMap");
 
-const errorHandlerMap = {
-  CastError: handleCastErrorDB,
-  ValidationError: handleValidationErrorsDB,
-  11000: handleDuplicateFieldDB,
-};
-
-const sendErrorDev = (err, res) => {
-  res.status(err.statusCode).json({
-    status: err.status,
-    message: err.message,
-    error: err,
-    stack: err.stack,
-  });
-};
-
-const sendErrorProd = (err, res) => {
-  if (err.isOperational) {
-    res.status(err.statusCode).json({
-      status: err.status,
-      message: err.message,
-    });
-  } else {
-    console.error("ERROR 💥", err);
-    res.status(500).json({
-      status: "error",
-      message: "Something went wrong!",
-    });
-  }
-};
-
-module.exports =  (err, req, res, next) => {
+module.exports = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || "error";
 
+  let error = err;
+
+  const handler = errorMap[error.name] || errorMap[error.code];
+
+  if (handler) error = handler(error);
+
   if (process.env.NODE_ENV === "development") {
-    sendErrorDev(err, res);
-  } else if (process.env.NODE_ENV === "production") {
-    let error = { ...err };
-    error.message = err.message;
-    error.name = err.name;
-    if (errorHandlerMap[error.name]) {
-      error = errorHandlerMap[error.name](error);
-    } else if (error.code && errorHandlerMap[error.code]) {
-      error = errorHandlerMap[error.code](error);
-    }
-    sendErrorProd(error, res);
+    return res.status(error.statusCode).json({
+      status: error.status,
+      message: error.message,
+      stack: error.stack,
+      error,
+    });
   }
+
+  if (error.isOperational) {
+    return res.status(error.statusCode).json({
+      status: error.status,
+      message: error.message,
+    });
+  }
+
+  console.error("💥 ERROR:", error);
+
+  res.status(500).json({
+    status: "error",
+    message: "Something went wrong!",
+  });
 };

@@ -1,6 +1,6 @@
 const express = require("express");
 const helmet = require("helmet");
-const mongoSanitize = require("express-mongo-sanitize");
+const mongoSanitize = require("./middlewares/mongoSanitize.js");
 const xss = require("xss");
 const cookieParser = require("cookie-parser");
 
@@ -21,7 +21,7 @@ app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 app.use(cookieParser());
 
-app.use(mongoSanitize());
+app.use(mongoSanitize);
 app.use((req, res, next) => {
   if (req.body) req.body = JSON.parse(xss(JSON.stringify(req.body)));
   if (req.query) req.query = JSON.parse(xss(JSON.stringify(req.query)));

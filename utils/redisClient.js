@@ -5,18 +5,19 @@ let client = null;
 let connecting = null;
 
 async function getRedisClient() {
-  if (!process.env.REDIS_CACHE_URL) return null;
+  if (!process.env.REDIS_URL) return null;
   if (client?.isOpen) return client;
 
   if (!connecting) {
     connecting = (async () => {
       try {
         client = createClient({
-          url: process.env.REDIS_CACHE_URL,
+          url: process.env.REDIS_URL,
           socket: {
             reconnectStrategy: (n) =>
               n >= 10 ? new Error("Max retries") : Math.min(n * 100, 3000),
             connectTimeout: 5000,
+            tls: false 
           },
           pingInterval: 10000, // keep connection alive under load
         });

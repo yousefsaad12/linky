@@ -7,6 +7,10 @@ const cookieParser = require("cookie-parser");
 const passport = require("passport");
 require("./config/passport");
 
+const {
+  redirectLimiter,
+  createUrlLimiter,
+} = require("./../middlewares/rateLimit");
 const urlRouter = require("./routes/urlRoutes");
 const urlController = require("./controllers/urlController.js");
 const authRouter = require("./routes/authRoutes");
@@ -20,10 +24,12 @@ app.use(helmet());
 
 const cors = require("cors");
 
-app.use(cors({
-  origin: process.env.FRONTEND_URL,
-  credentials: true, // ← allows cookies cross-origin
-}));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true, // ← allows cookies cross-origin
+  }),
+);
 
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));

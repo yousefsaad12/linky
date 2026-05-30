@@ -24,6 +24,8 @@ router.get(
   googleCallback,
 );
 
+router.get("/me", authController.protect, authController.getMe);
+
 router.post("/logout", logout);
 
 module.exports = router;

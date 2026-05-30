@@ -43,7 +43,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   if (req.cookies?.jwt) {
     token = req.cookies.jwt;
   }
-
+  
   if (!token) {
     return next(new AppError("Not authenticated", 401));
   }

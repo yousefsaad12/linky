@@ -26,7 +26,7 @@ exports.googleCallback = (req, res) => {
   });
 
   // redirect to frontend instead of returning JSON
-  return res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
+  return res.redirect(`${process.env.FRONTEND_URL}`);
 };
 
 exports.protect = catchAsync(async (req, res, next) => {

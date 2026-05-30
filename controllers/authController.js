@@ -25,7 +25,8 @@ exports.googleCallback = (req, res) => {
     maxAge: 10 * 24 * 60 * 60 * 1000,
   });
 
-  // redirect to frontend instead of returning JSON
+  console.log(`${process.env.FRONTEND_URL}`);
+  
   return res.redirect(`${process.env.FRONTEND_URL}`);
 };
 

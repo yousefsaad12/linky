@@ -3,7 +3,7 @@ const helmet = require("helmet");
 const mongoSanitize = require("./middlewares/mongoSanitize.js");
 const xss = require("xss");
 const cookieParser = require("cookie-parser");
-
+const cors = require("cors");
 const passport = require("passport");
 require("./config/passport");
 

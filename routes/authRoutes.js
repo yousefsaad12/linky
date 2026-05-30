@@ -1,9 +1,10 @@
 const express = require("express");
 const passport = require("passport");
-
 const {
   googleCallback,
   logout,
+  protect,
+  getMe
 } = require("../controllers/authController");
 
 const router = express.Router();
@@ -24,7 +25,7 @@ router.get(
   googleCallback,
 );
 
-router.get("/me", authController.protect, authController.getMe);
+router.get("/me", protect, getMe);
 
 router.post("/logout", logout);
 

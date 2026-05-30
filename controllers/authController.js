@@ -13,7 +13,8 @@ const signToken = (id) => {
 const jwtCookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
-  sameSite: "lax",
+  sameSite: "none", // ← change from "lax" to "none" for cross-origin
+  secure: true,     // ← required when sameSite is "none"
 };
 
 exports.googleCallback = (req, res) => {
@@ -21,13 +22,11 @@ exports.googleCallback = (req, res) => {
 
   res.cookie("jwt", token, {
     ...jwtCookieOptions,
-    maxAge: 10 * 24 * 60 * 60 * 1000, // match JWT expiry
+    maxAge: 10 * 24 * 60 * 60 * 1000,
   });
 
-  return res.status(200).json({
-    status: "success",
-    user: req.user,
-  });
+  // redirect to frontend instead of returning JSON
+  return res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
 };
 
 exports.protect = catchAsync(async (req, res, next) => {

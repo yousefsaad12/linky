@@ -19,7 +19,7 @@ urlRouter
 
 urlRouter
   .route("/:shortCode")
-  .get(redirectLimiter, urlController.getOriginalUrl)
+
   .delete(authController.protect,urlController.deleteUrl);
 
 module.exports = urlRouter;

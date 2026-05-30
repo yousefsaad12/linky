@@ -19,7 +19,7 @@ const globalErrorHandler = require("./middlewares/errorMiddleware");
 const AppError = require("./utils/appError");
 
 const app = express();
-
+app.enable("trust proxy");
 app.use(helmet());
 
 app.use(

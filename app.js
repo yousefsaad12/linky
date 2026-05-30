@@ -10,7 +10,7 @@ require("./config/passport");
 const {
   redirectLimiter,
   createUrlLimiter,
-} = require("./../middlewares/rateLimit");
+} = require("./middlewares/rateLimit.js");
 const urlRouter = require("./routes/urlRoutes");
 const urlController = require("./controllers/urlController.js");
 const authRouter = require("./routes/authRoutes");

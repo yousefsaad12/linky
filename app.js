@@ -22,14 +22,7 @@ const app = express();
 
 app.use(helmet());
 
-const cors = require("cors");
 
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL,
-    credentials: true, // ← allows cookies cross-origin
-  }),
-);
 
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));

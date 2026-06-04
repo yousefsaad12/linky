@@ -13,7 +13,7 @@ const signToken = (id) => {
 const jwtCookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
-  sameSite: "lax",
+  sameSite: "none",
 };
 
 exports.googleCallback = (req, res) => {
@@ -21,7 +21,7 @@ exports.googleCallback = (req, res) => {
 
   res.cookie("jwt", token, {
     ...jwtCookieOptions,
-    maxAge: 10 * 24 * 60 * 60 * 1000, // match JWT expiry
+    maxAge: 60 * 60 * 1000, // 1 hour
   });
 
   return res.status(200).json({
@@ -54,7 +54,8 @@ exports.protect = catchAsync(async (req, res, next) => {
 });
 
 exports.logout = (req, res) => {
-  res.clearCookie("jwt", jwtCookieOptions);
+  // Ensure clearCookie uses the same options (include path) so cookie is removed
+  res.clearCookie("jwt", { ...jwtCookieOptions, path: "/" });
 
   res.status(200).json({
     status: "success",

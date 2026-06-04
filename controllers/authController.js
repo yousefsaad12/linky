@@ -30,6 +30,13 @@ exports.googleCallback = (req, res) => {
   });
 };
 
+exports.getMe = (req, res) => {
+  res.status(200).json({
+    status: "success",
+    user: req.user,
+  });
+};
+
 exports.protect = catchAsync(async (req, res, next) => {
   let token;
 

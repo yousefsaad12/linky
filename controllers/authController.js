@@ -14,6 +14,7 @@ const jwtCookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
   sameSite: "none",
+  path: "/",
 };
 
 exports.googleCallback = (req, res) => {
@@ -24,10 +25,7 @@ exports.googleCallback = (req, res) => {
     maxAge: 60 * 60 * 1000, // 1 hour
   });
 
-  return res.status(200).json({
-    status: "success",
-    user: req.user,
-  });
+  return res.redirect(process.env.FRONTEND_URL)
 };
 
 exports.getMe = (req, res) => {

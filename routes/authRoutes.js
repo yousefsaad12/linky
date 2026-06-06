@@ -8,13 +8,18 @@ const {
 } = require("../controllers/authController");
 
 const router = express.Router();
-router.get(
-  "/google",
+
+router.get("/google", (req, res, next) => {
+  const prompt = req.query.prompt === "select_account" 
+    ? "select_account" 
+    : "none";
+
   passport.authenticate("google", {
     scope: ["profile", "email"],
     session: false,
-  }),
-);
+    prompt,
+  })(req, res, next);
+});
 
 router.get(
   "/google/callback",

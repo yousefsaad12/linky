@@ -10,17 +10,10 @@ const {
 const router = express.Router();
 
 router.get("/google", (req, res, next) => {
-  console.log("Full query:", req.query); // 👈
-  console.log("prompt param:", req.query.prompt); // 👈
-
-  const prompt = req.query.prompt === "select_account"
-    ? "select_account"
-    : undefined;
-
   passport.authenticate("google", {
     scope: ["profile", "email"],
     session: false,
-    ...(prompt && { prompt }),
+    prompt: "select_account",
   })(req, res, next);
 });
 

@@ -10,18 +10,17 @@ const {
 const router = express.Router();
 
 router.get("/google", (req, res, next) => {
-  console.log("prompt param:", req.query.prompt); // 👈 add this
-  
-  const prompt = req.query.prompt === "select_account" 
-    ? "select_account" 
-    : "none";
+  const prompt = req.query.prompt === "select_account"
+    ? "select_account"
+    : undefined; // 👈 undefined = let Google decide naturally
 
   passport.authenticate("google", {
     scope: ["profile", "email"],
     session: false,
-    prompt,
+    ...(prompt && { prompt }), // only add prompt if set
   })(req, res, next);
 });
+
 router.get(
   "/google/callback",
   passport.authenticate("google", {

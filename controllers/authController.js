@@ -3,6 +3,7 @@ const { promisify } = require("util");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError.js");
 const User = require("../models/userModel");
+const Url = require("../models/urlModel");
 const ApiKey = require("../models/apiKeyModel");
 const { getPlanConfig } = require("../config/plans");
 const { hashApiKey } = require("../utils/apiKeyUtils");
@@ -98,9 +99,10 @@ exports.protect = catchAsync(async (req, res, next) => {
 });
 
 // 5. Hydrate User Session Profile for Next.js Hook
-exports.getMe = (req, res) => {
+exports.getMe = catchAsync(async (req, res) => {
   const plan = req.user.plan || "free";
   const planConfig = getPlanConfig(plan);
+  const linkCount = await Url.countDocuments({ user: req.user._id });
 
   res.status(200).json({
     status: "success",
@@ -111,13 +113,18 @@ exports.getMe = (req, res) => {
       avatar: req.user.avatar,
       plan,
       limits: {
-        maxLinks: planConfig.maxLinks,
+        maxLinks: Number.isFinite(planConfig.maxLinks)
+          ? planConfig.maxLinks
+          : null,
         clickHistoryDays: planConfig.clickHistoryDays,
       },
       features: planConfig.features,
+      usage: {
+        links: linkCount,
+      },
     },
   });
-};
+});
 
 // 6. Session De-authentication Clear Out
 exports.logout = (req, res) => {

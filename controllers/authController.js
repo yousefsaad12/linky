@@ -8,36 +8,29 @@ const ApiKey = require("../models/apiKeyModel");
 const { getPlanConfig } = require("../config/plans");
 const { hashApiKey } = require("../utils/apiKeyUtils");
 
-// 1. Helper function to generate JWT signatures
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 };
 
-// 2. Production-safe Cross-Origin Cookie Settings
-const isProduction = process.env.NODE_ENV === "production";
-
 const jwtCookieOptions = {
   httpOnly: true,
-  secure: isProduction, // Evaluates to true on Azure HTTPS, false on local HTTP
-  sameSite: isProduction ? "none" : "lax", // 'none' enables cross-domain exchange on Azure
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "none",
   path: "/",
 };
 
-// 3. Google OAuth Redirect Callback Handler
+// 1. Google OAuth Callback
 exports.googleCallback = (req, res) => {
   const token = signToken(req.user._id);
 
   res.cookie("jwt", token, {
     ...jwtCookieOptions,
-    maxAge: 10 * 24 * 60 * 60 * 1000, // 10 days
+    maxAge: 60 * 60 * 1000, // 1 hour
   });
 
-  const targetUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-  console.log(`Redirecting authenticated user to: ${targetUrl}`);
-  
-  return res.redirect(targetUrl);
+  return res.redirect(process.env.FRONTEND_URL);
 };
 
 const attachUser = (req, user, authMethod) => {
@@ -48,7 +41,7 @@ const attachUser = (req, user, authMethod) => {
   req.authMethod = authMethod;
 };
 
-// 4. Token Validation and Route Protection Middleware
+// 2. Token Validation and Route Protection Middleware
 exports.protect = catchAsync(async (req, res, next) => {
   const bearer = req.headers.authorization;
   if (bearer?.startsWith("Bearer ")) {
@@ -98,7 +91,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   next();
 });
 
-// 5. Hydrate User Session Profile for Next.js Hook
+// 3. Hydrate User Session Profile for Next.js Hook
 exports.getMe = catchAsync(async (req, res) => {
   const plan = req.user.plan || "free";
   const planConfig = getPlanConfig(plan);
@@ -126,7 +119,7 @@ exports.getMe = catchAsync(async (req, res) => {
   });
 });
 
-// 6. Session De-authentication Clear Out
+// 4. Session De-authentication Clear Out
 exports.logout = (req, res) => {
   res.clearCookie("jwt", jwtCookieOptions);
 

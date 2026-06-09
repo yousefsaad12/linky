@@ -16,7 +16,7 @@ const signToken = (id) => {
 
 const jwtCookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
+  secure: true,
   sameSite: "none",
   path: "/",
 };
@@ -121,7 +121,12 @@ exports.getMe = catchAsync(async (req, res) => {
 
 // 4. Session De-authentication Clear Out
 exports.logout = (req, res) => {
-  res.clearCookie("jwt", jwtCookieOptions);
+  res.clearCookie("jwt", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    path: "/",
+  });
 
   res.status(200).json({
     status: "success",

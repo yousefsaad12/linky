@@ -32,7 +32,7 @@ app.use(helmet());
 // 🚀 FIX 2: Explicitly authorize your frontend URLs so cookies attach properly
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://linky-project.vercel.app" // Add your frontend Azure/Vercel URL here when deployed
+  "https://lnqo.vercel.app" // Add your frontend Azure/Vercel URL here when deployed
 ];
 
 app.use(

@@ -20,7 +20,8 @@ const userSchema = new mongoose.Schema(
       type: String,
       unique: true,
       sparse: true,
-      index: true, // Add index for faster lookups
+      index: true,
+      select : false // Add index for faster lookups
     },
 
     avatar: {
@@ -32,6 +33,7 @@ const userSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true,
+      select : false
     },
 
     plan: {

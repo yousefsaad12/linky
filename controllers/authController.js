@@ -80,8 +80,11 @@ exports.protect = catchAsync(async (req, res, next) => {
     return next(new AppError("Not authenticated", 401));
   }
 
+  console.log("TOKEN:", token);
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  console.log("DECODED:", decoded);
   const user = await User.findById(decoded.id);
+  console.log("USER:", user);
 
   if (!user) {
     return next(new AppError("User no longer exists", 401));

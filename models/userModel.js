@@ -34,7 +34,11 @@ const userSchema = new mongoose.Schema(
       default: true,
     },
 
-    
+    plan: {
+      type: String,
+      enum: ["free", "pro"],
+      default: "free",
+    },
   },
   {
     timestamps: true, // Automatically adds createdAt & updatedAt

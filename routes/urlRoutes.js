@@ -7,10 +7,13 @@ const {
   redirectLimiter,
   createUrlLimiter,
 } = require("./../middlewares/rateLimit");
+const { checkLinkQuota } = require("../middlewares/checkPlan");
+
 urlRouter
   .route("/")
   .post(
     authController.protect,
+    checkLinkQuota,
     createUrlLimiter,
     validateUrl,
     urlController.createShortUrl,

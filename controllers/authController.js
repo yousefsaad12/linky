@@ -3,6 +3,9 @@ const { promisify } = require("util");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError.js");
 const User = require("../models/userModel");
+const ApiKey = require("../models/apiKeyModel");
+const { getPlanConfig } = require("../config/plans");
+const { hashApiKey } = require("../utils/apiKeyUtils");
 
 // 1. Helper function to generate JWT signatures
 const signToken = (id) => {
@@ -36,38 +39,82 @@ exports.googleCallback = (req, res) => {
   return res.redirect(targetUrl);
 };
 
-// 4. Token Validation and Route Route Protection Middleware
-exports.protect = catchAsync(async (req, res, next) => {
-  let token;
-
-  if (req.cookies?.jwt) {
-    token = req.cookies.jwt;
+const attachUser = (req, user, authMethod) => {
+  if (!user.isActive) {
+    throw new AppError("This account has been deactivated", 401);
   }
-  
+  req.user = user;
+  req.authMethod = authMethod;
+};
+
+// 4. Token Validation and Route Protection Middleware
+exports.protect = catchAsync(async (req, res, next) => {
+  const bearer = req.headers.authorization;
+  if (bearer?.startsWith("Bearer ")) {
+    const rawKey = bearer.slice(7).trim();
+    if (!rawKey) {
+      return next(new AppError("Not authenticated", 401));
+    }
+
+    const apiKey = await ApiKey.findOne({
+      keyHash: hashApiKey(rawKey),
+      revokedAt: null,
+    });
+
+    if (!apiKey) {
+      return next(new AppError("Invalid API key", 401));
+    }
+
+    const user = await User.findById(apiKey.user);
+    if (!user) {
+      return next(new AppError("User no longer exists", 401));
+    }
+
+    if ((user.plan || "free") !== "pro") {
+      return next(new AppError("API access requires a Pro plan", 403));
+    }
+
+    apiKey.lastUsedAt = new Date();
+    await apiKey.save({ validateBeforeSave: false });
+
+    attachUser(req, user, "api_key");
+    return next();
+  }
+
+  const token = req.cookies?.jwt;
   if (!token) {
     return next(new AppError("Not authenticated", 401));
   }
 
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-
   const user = await User.findById(decoded.id);
 
   if (!user) {
     return next(new AppError("User no longer exists", 401));
   }
 
-  req.user = user;
+  attachUser(req, user, "cookie");
   next();
 });
 
 // 5. Hydrate User Session Profile for Next.js Hook
 exports.getMe = (req, res) => {
+  const plan = req.user.plan || "free";
+  const planConfig = getPlanConfig(plan);
+
   res.status(200).json({
     status: "success",
     data: {
       id: req.user._id,
       email: req.user.email,
       name: req.user.name,
+      avatar: req.user.avatar,
+      plan,
+      limits: {
+        maxLinks: planConfig.maxLinks,
+        clickHistoryDays: planConfig.clickHistoryDays,
+      },
+      features: planConfig.features,
     },
   });
 };

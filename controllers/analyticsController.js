@@ -2,8 +2,15 @@ const Url = require("../models/urlModel");
 const Click = require("../models/clickModel");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError.js");
-const { parsePeriod, clickMatch } = require("../utils/parsePeriod");
+const { clickMatch } = require("../utils/parsePeriod");
 const { userUrlFilter, scopeClickMatch } = require("../utils/userScope");
+const {
+  parsePeriodForPlan,
+  hasFeature,
+  planMinSince,
+} = require("../utils/planUtils");
+
+const userPlan = (req) => req.user.plan || "free";
 const {
   breakdown,
   clicksOverTime,
@@ -25,7 +32,8 @@ const scopedWindowsMatch = async (userId, sinceDate) => {
 };
 
 exports.getOverview = catchAsync(async (req, res) => {
-  const { period, since } = parsePeriod(req.query.period);
+  const plan = userPlan(req);
+  const { period, since, clamped } = parsePeriodForPlan(req.query.period, plan);
   const match = await scopeClickMatch(req.user._id, since);
   const windows = periodWindows();
   const ownerFilter = userUrlFilter(req.user._id);
@@ -72,6 +80,7 @@ exports.getOverview = catchAsync(async (req, res) => {
     status: "success",
     data: {
       period,
+      ...(clamped && { clamped: true }),
       summary: {
         totalUrls,
         totalClicks,
@@ -94,7 +103,8 @@ exports.getOverview = catchAsync(async (req, res) => {
 });
 
 exports.getTopLinks = catchAsync(async (req, res) => {
-  const { period, since } = parsePeriod(req.query.period);
+  const plan = userPlan(req);
+  const { period, since, clamped } = parsePeriodForPlan(req.query.period, plan);
   const match = await scopeClickMatch(req.user._id, since);
   const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 50);
 
@@ -104,6 +114,7 @@ exports.getTopLinks = catchAsync(async (req, res) => {
     status: "success",
     results: links.length,
     period,
+    ...(clamped && { clamped: true }),
     data: links,
   });
 });
@@ -138,8 +149,13 @@ exports.getLinksTable = catchAsync(async (req, res) => {
 exports.getRecentClicks = catchAsync(async (req, res, next) => {
   const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
   const { shortCode } = req.query;
+  const since = planMinSince(userPlan(req));
 
-  const match = await scopeClickMatch(req.user._id, null, shortCode || undefined);
+  const match = await scopeClickMatch(
+    req.user._id,
+    since,
+    shortCode || undefined,
+  );
   if (match === null) {
     return next(new AppError("Short URL not found", 404));
   }
@@ -159,7 +175,9 @@ exports.getRecentClicks = catchAsync(async (req, res, next) => {
 
 exports.getUrlAnalytics = catchAsync(async (req, res, next) => {
   const { shortCode } = req.params;
-  const { period, since } = parsePeriod(req.query.period);
+  const plan = userPlan(req);
+  const { period, since, clamped } = parsePeriodForPlan(req.query.period, plan);
+  const includeCities = hasFeature(plan, "cityAnalytics");
 
   const url = await Url.findOne({
     shortCode,
@@ -192,7 +210,7 @@ exports.getUrlAnalytics = catchAsync(async (req, res, next) => {
     breakdown(match, "os"),
     breakdown(match, "referrer", 15),
     breakdown(match, "region"),
-    breakdown(match, "city", 15),
+    includeCities ? breakdown(match, "city", 15) : Promise.resolve([]),
     clicksOverTime(match, granularity),
   ]);
 
@@ -202,6 +220,7 @@ exports.getUrlAnalytics = catchAsync(async (req, res, next) => {
     status: "success",
     data: {
       period,
+      ...(clamped && { clamped: true }),
       url: {
         ...url,
         shortUrl: base + url.shortCode,

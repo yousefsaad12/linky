@@ -34,14 +34,13 @@ exports.googleCallback = (req, res) => {
 };
 
 const attachUser = (req, user, authMethod) => {
-  if (!user.isActive) {
+  if (user.isActive === false) {
     throw new AppError("This account has been deactivated", 401);
   }
   req.user = user;
   req.authMethod = authMethod;
 };
 
-// 2. Token Validation and Route Protection Middleware
 exports.protect = catchAsync(async (req, res, next) => {
   const bearer = req.headers.authorization;
   if (bearer?.startsWith("Bearer ")) {

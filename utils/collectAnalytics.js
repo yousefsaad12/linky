@@ -15,6 +15,8 @@ const collectAnalytics = (req) => {
   }
 
   const geo = geoip.lookup(ip);
+  console.log("IP:", ip);
+  console.log("GEO:", geo);
 
   return {
     os: parser.getOS().name || "unknown",

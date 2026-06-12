@@ -123,11 +123,13 @@ exports.getMe = catchAsync(async (req, res) => {
 
 // 4. Session De-authentication Clear Out
 exports.logout = (req, res) => {
-  res.clearCookie("jwt", {
+  res.cookie("jwt", "", {
     httpOnly: true,
     secure: true,
     sameSite: "none",
     path: "/",
+    maxAge: 0,        // expire immediately
+    expires: new Date(0), // belt and suspenders
   });
 
   res.status(200).json({

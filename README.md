@@ -1,5 +1,7 @@
 # lnqo API
 
+
+<video src="https://github.com/yousefsaad12/linky/issues/6#issue-4869423634" controls width="600"></video>
 Developer-first URL shortening and click analytics API built with Express, MongoDB, Redis, BullMQ, Google OAuth, and API-key access.
 
 This repository is the backend for the companion Next.js app in `D:\URL Frontend`.
